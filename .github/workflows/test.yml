@@ -14,9 +14,9 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Cache dependencies
@@ -33,6 +33,8 @@ jobs:
         run: |
           pip install -Ur requirements.txt coveralls
           python setup.py develop
+      - name: Instrument code
+        uses: AryazE/auto-dylin/instrument@main
       - name: Run tests
         if: matrix.os != 'ubuntu-latest' || matrix.python-version != env.PYTHON_LATEST
         run: coverage run --source=thefuck,tests -m pytest -v --capture=sys tests
@@ -42,3 +44,6 @@ jobs:
           docker build -t thefuck/python3 -f tests/Dockerfile --build-arg PYTHON_VERSION=3 .
           docker build -t thefuck/python2 -f tests/Dockerfile --build-arg PYTHON_VERSION=2 .
           coverage run --source=thefuck,tests -m pytest -v --capture=sys tests --enable-functional
+      - name: Report results
+        if: always()
+        uses: AryazE/auto-dylin/report@main
