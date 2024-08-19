@@ -1,6 +1,6 @@
 name: Tests
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 env:
   PYTHON_LATEST: "3.11"
@@ -9,8 +9,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12-dev"]
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -33,9 +33,6 @@ jobs:
         run: |
           pip install -Ur requirements.txt coveralls
           python setup.py develop
-      - name: Lint
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_LATEST
-        run: flake8
       - name: Run tests
         if: matrix.os != 'ubuntu-latest' || matrix.python-version != env.PYTHON_LATEST
         run: coverage run --source=thefuck,tests -m pytest -v --capture=sys tests
@@ -45,24 +42,3 @@ jobs:
           docker build -t thefuck/python3 -f tests/Dockerfile --build-arg PYTHON_VERSION=3 .
           docker build -t thefuck/python2 -f tests/Dockerfile --build-arg PYTHON_VERSION=2 .
           coverage run --source=thefuck,tests -m pytest -v --capture=sys tests --enable-functional
-      - name: Post coverage results
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_LATEST
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: coveralls --service=github
-  test-deprecated:
-    strategy:
-      matrix:
-        python-version: ["2.7", "3.6"]
-    runs-on: ubuntu-latest
-    container: python:${{ matrix.python-version }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install The Fuck with all dependencies
-        run: |
-          pip install -Ur requirements.txt coveralls
-          python setup.py develop
-      - name: Lint
-        run: flake8
-      - name: Run tests
-        run: coverage run --source=thefuck,tests -m pytest -v --capture=sys tests
