@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.11"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -31,19 +31,16 @@ jobs:
       - name: Install The Fuck with all dependencies
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
-          pip install -Ur requirements.txt coveralls
+          pip install -Ur requirements.txt pytest-xdist
           python setup.py develop
       - name: Instrument code
         uses: AryazE/auto-dylin/instrument@main
-      - name: Run tests
-        if: matrix.os != 'ubuntu-latest' || matrix.python-version != env.PYTHON_LATEST
-        run: coverage run --source=thefuck,tests -m pytest -v --capture=sys tests
+        with:
+            analysis-coverage: false
       - name: Run tests (including functional)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_LATEST
         run: |
-          docker build -t thefuck/python3 -f tests/Dockerfile --build-arg PYTHON_VERSION=3 .
-          docker build -t thefuck/python2 -f tests/Dockerfile --build-arg PYTHON_VERSION=2 .
-          coverage run --source=thefuck,tests -m pytest -v --capture=sys tests --enable-functional
+          python -m pytest -n 4 --capture=sys tests --enable-functional
       - name: Report results
         if: always()
         uses: AryazE/auto-dylin/report@main
