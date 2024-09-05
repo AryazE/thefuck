@@ -40,7 +40,7 @@ jobs:
       - name: Run tests (including functional)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_LATEST
         run: |
-          python -m pytest -n 4 --capture=sys tests --enable-functional
+          python -m pytest -n 4 tests
       - name: Report results
         if: always()
         uses: AryazE/auto-dylin/report@main
